@@ -35,7 +35,7 @@ The Tmux Orchestrator uses a three-tier hierarchy to overcome context window lim
 ### Auto Starting Script
 
 ```bash
-# Create start-briefing-template.md
+# 1 (Not mandatory): Create start-briefing-template.md
 cat > start-briefing-template.md << 'EOF'
 You are the Orchestrator. Start project "[project-name]" and set up a project manager for:
 1. Frontend Developer
