@@ -223,11 +223,11 @@ tmux send-keys -t $PROJECT_NAME:0 "You are responsible for the $PROJECT_NAME cod
 **CRITICAL FIRST STEP**: Read the PROJECT_INSTRUCTIONS.md file in the project root immediately. This contains project-specific instructions that override any general guidelines. Acknowledge that you've read it before proceeding.
 
 After reading PROJECT_INSTRUCTIONS.md, analyze the project to understand:
-- What type of project this is (check package.json, requirements.txt, etc.)
+- What type of project this is (check package.json, composer.json, requirements.txt, etc.)
 - How to start the development server
 - What the main purpose of the application is
 
-Then start the dev server in window 2 (Dev-Server) and begin working on priority issues."
+Then start the dev server in window 2 (Dev-Server) and wait for any tasks from Orchestrator/PM."
 sleep 1
 tmux send-keys -t $PROJECT_NAME:0 Enter
 ```
@@ -235,6 +235,9 @@ tmux send-keys -t $PROJECT_NAME:0 Enter
 #### 5. Project Type Detection (Agent Should Do This)
 The agent should check for:
 ```bash
+# Laravel project
+test -f composer.json && cat composer.json | grep laravel
+
 # Node.js project
 test -f package.json && cat package.json | grep scripts
 
@@ -251,6 +254,9 @@ test -f go.mod
 #### 6. Start Development Server (Agent Should Do This)
 Based on project type, the agent should start the appropriate server in window 2:
 ```bash
+# For Laravel/PHP projects
+tmux send-keys -t $PROJECT_NAME:2 "php artisan serve" Enter
+
 # For Next.js/Node projects
 tmux send-keys -t $PROJECT_NAME:2 "npm install && npm run dev" Enter
 
@@ -260,6 +266,8 @@ tmux send-keys -t $PROJECT_NAME:2 "source venv/bin/activate && uvicorn app.main:
 # For Django
 tmux send-keys -t $PROJECT_NAME:2 "source venv/bin/activate && python manage.py runserver" Enter
 ```
+
+**CRITICAL**: Follow any instructions in the project's PROJECT_INSTRUCTIONS.md to start the dev server (if any).
 
 #### 7. Check GitHub Issues (Agent Should Do This)
 ```bash
@@ -425,6 +433,7 @@ ls -la ~/dev/ | grep -i "[project-name]"
 
 # Analyze project type
 cd ~/dev/[project-name]
+test -f composer.json && echo "PHP project"
 test -f package.json && echo "Node.js project"
 test -f requirements.txt && echo "Python project"
 ```

@@ -31,7 +31,7 @@ log_success "Created orchestrator session"
 
 # Step 2: Start Claude in the orchestrator
 log_info "Starting Claude in orchestrator session"
-tmux send-keys -t "$ORCHESTRATOR_SESSION:0" "claude" Enter
+tmux send-keys -t "$ORCHESTRATOR_SESSION:0" "claude --dangerously-skip-permissions" Enter
 
 # Wait for Claude to initialize
 log_info "Waiting for Claude to initialize..."
