@@ -28,7 +28,7 @@ The orchestration system uses TWO separate sessions:
 2. **Project Session**: Separate tmux session for the project team
    - Contains ONLY the working agents (PMs, Developers, QA, etc.)
    - NO orchestrator window should exist here
-   - Example: `web-app` session with Backend-PM, Frontend-PM, Backend-Dev, Frontend-Dev
+   - Example: `web-app` session with Project-Manager, Backend-Dev, Frontend-Dev
 
 ### Agent Hierarchy
 ```
@@ -48,7 +48,7 @@ The orchestration system uses TWO separate sessions:
 6. **Researcher**: Technology evaluation
 7. **Documentation Writer**: Technical documentation
 
-### 📋 PROJECT_INSTRUCTIONS.md - MANDATORY FOR ALL AGENTS
+### PROJECT_INSTRUCTIONS.md - MANDATORY FOR ALL AGENTS
 
 **CRITICAL REQUIREMENT**: Every agent deployed to a project MUST read the PROJECT_INSTRUCTIONS.md file as their first action.
 
@@ -64,10 +64,26 @@ ALL agent briefings must include this as the first instruction:
 **CRITICAL FIRST STEP**: Read the PROJECT_INSTRUCTIONS.md file in the project root immediately. This contains project-specific instructions that override any general guidelines. Acknowledge that you've read it before proceeding.
 ```
 
+### COMMUNICATION PROTOCOL USING send-claude-message.sh - MANDATORY FOR ALL AGENTS
+
+**CRITICAL REQUIREMENT**: Every agent deployed MUST use this script for ALL communication with other agents:
+```bash
+~/dev/teachfloor/team-orchestrator/send-claude-message.sh [target] \"message\"
+```
+
+COMMUNICATION EXAMPLES:
+```bash
+~/dev/teachfloor/team-orchestrator/send-claude-message.sh [session]:[PM-window] \"STATUS: Dev server running, working on authentication\"
+~/dev/teachfloor/team-orchestrator/send-claude-message.sh [session]:[Dev-window] \"Quick update please\"
+```
+
+Orchestrator is in change to instruct the deployed agents to use the communication script to communicate between team members inside the briefing message.
+
 #### Orchestrator Responsibility:
 - Verify PROJECT_INSTRUCTIONS.md exists in target project
 - Ensure all agents acknowledge reading it before task assignment
 - Update instructions when project requirements change
+- Ensure all agents acknowledge the communication script protocol
 
 ## 🔐 Git Discipline - MANDATORY FOR ALL AGENTS
 
@@ -195,16 +211,17 @@ PROJECT_PATH="/Users/stefanomarra/dev/teachfloor/$PROJECT_NAME"
 tmux new-session -d -s $PROJECT_NAME -c "$PROJECT_PATH"
 ```
 
-#### 3. Set Up Standard Windows
+#### 3. Set Up Standard Windows (Example)
+
 ```bash
-# Window 0: Claude Agent
-tmux rename-window -t $PROJECT_NAME:0 "Claude-Agent"
+# Window 0: Project Manager
+tmux rename-window -t $PROJECT_NAME:0 "Project-Manager"
 
-# Window 1: Shell
-tmux new-window -t $PROJECT_NAME -n "Shell" -c "$PROJECT_PATH"
+# Window 1: Frontend Dev (or Backend Dev)
+tmux new-window -t $PROJECT_NAME -n "Frontend-Dev" -c "$PROJECT_PATH"
 
-# Window 2: Dev Server (will start app here)
-tmux new-window -t $PROJECT_NAME -n "Dev-Server" -c "$PROJECT_PATH"
+# Window 2: Additional agents (e.g. QA Engineer)
+tmux new-window -t $PROJECT_NAME -n "Backend-Dev" -c "$PROJECT_PATH"
 ```
 
 #### 4. Brief the Claude Agent
@@ -214,7 +231,22 @@ tmux send-keys -t $PROJECT_NAME:0 "claude --dangerously-skip-permissions" Enter
 sleep 5  # Wait for Claude to start
 
 # Send the briefing
-tmux send-keys -t $PROJECT_NAME:0 "You are responsible for the $PROJECT_NAME codebase. Your duties include:
+tmux send-keys -t $PROJECT_NAME:0 "🚨 MANDATORY COMMUNICATION PROTOCOL - READ FIRST:
+
+You MUST use this script for ALL communication with other agents:
+~/dev/teachfloor/team-orchestrator/send-claude-message.sh [target] \"message\"
+
+COMMUNICATION EXAMPLES FOR YOU:
+~/dev/teachfloor/team-orchestrator/send-claude-message.sh $PROJECT_NAME:[PM-window] \"STATUS: Dev server running, working on authentication\"
+~/dev/teachfloor/team-orchestrator/send-claude-message.sh $PROJECT_NAME:[PM-window] \"BLOCKER: Need API documentation for user endpoints\"
+
+⚠️ CRITICAL: Writing messages in your own window does NOT communicate with anyone. You MUST use the script.
+
+ACKNOWLEDGE: Reply 'COMMUNICATION PROTOCOL UNDERSTOOD' before proceeding.
+
+---
+
+You are responsible for the $PROJECT_NAME codebase. Your duties include:
 1. Getting the application running
 2. Checking GitHub issues for priorities
 3. Working on highest priority tasks
@@ -227,7 +259,7 @@ After reading PROJECT_INSTRUCTIONS.md, analyze the project to understand:
 - How to start the development server
 - What the main purpose of the application is
 
-Then start the dev server in window 2 (Dev-Server) and wait for any tasks from Orchestrator/PM."
+Then prepare a status report for the Project Manager and wait for any tasks from Orchestrator/PM."
 sleep 1
 tmux send-keys -t $PROJECT_NAME:0 Enter
 ```
@@ -304,9 +336,9 @@ ls -la ~/dev/ | grep -i task
 tmux new-session -d -s task-templates -c "/Users/stefanomarra/dev/teachfloor/task-templates"
 
 # 3. Set up windows
-tmux rename-window -t task-templates:0 "Claude-Agent"
-tmux new-window -t task-templates -n "Shell" -c "/Users/stefanomarra/dev/teachfloor/task-templates"
-tmux new-window -t task-templates -n "Dev-Server" -c "/Users/stefanomarra/dev/teachfloor/task-templates"
+tmux rename-window -t task-templates:0 "Project-Manager"
+tmux new-window -t task-templates -n "Frontend-Dev" -c "/Users/stefanomarra/dev/teachfloor/task-templates"
+tmux new-window -t task-templates -n "Backend-Dev" -c "/Users/stefanomarra/dev/teachfloor/task-templates"
 
 # 4. Start Claude and brief
 tmux send-keys -t task-templates:0 "claude --dangerously-skip-permissions" Enter
@@ -348,7 +380,22 @@ tmux send-keys -t [session]:[PM-window] "claude --dangerously-skip-permissions" 
 sleep 5
 
 # Send PM-specific briefing
-tmux send-keys -t [session]:[PM-window] "You are the Project Manager for this project. Your responsibilities:
+tmux send-keys -t [session]:[PM-window] "🚨 MANDATORY COMMUNICATION PROTOCOL - READ FIRST:
+
+You MUST use this script for ALL communication with other agents:
+~/dev/teachfloor/team-orchestrator/send-claude-message.sh [target] \"message\"
+
+COMMUNICATION EXAMPLES FOR YOU:
+~/dev/teachfloor/team-orchestrator/send-claude-message.sh $PROJECT_NAME:[Dev-window] \"STATUS: Quick status update please\"
+~/dev/teachfloor/team-orchestrator/send-claude-message.sh $PROJECT_NAME:[Dev-window] \"STATUS UPDATE: Please provide: 1) Completed tasks, 2) Current work, 3) Any blockers\"
+
+⚠️ CRITICAL: Writing messages in your own window does NOT communicate with anyone. You MUST use the script.
+
+ACKNOWLEDGE: Reply 'COMMUNICATION PROTOCOL UNDERSTOOD' before proceeding.
+
+---
+
+You are the Project Manager for this project. Your responsibilities:
 
 1. **Quality Standards**: Maintain exceptionally high standards. No shortcuts, no compromises.
 2. **Verification**: Test everything. Trust but verify all work.
@@ -365,7 +412,7 @@ Key Principles:
 
 **CRITICAL FIRST STEP**: Read the PROJECT_INSTRUCTIONS.md file in the project root immediately. This contains project-specific instructions that override any general guidelines. Acknowledge that you've read it before proceeding.
 
-After reading PROJECT_INSTRUCTIONS.md, analyze the project and existing team members, then introduce yourself to the developers."
+After reading PROJECT_INSTRUCTIONS.md, wait for me to set up your team members, then analyze the project and introduce yourself to the developers and coordinate with them to understand current project status."
 sleep 1
 tmux send-keys -t [session]:[PM-window] Enter
 ```
@@ -673,20 +720,20 @@ When a command fails:
 #### Using send-claude-message.sh
 ```bash
 # Basic usage - ALWAYS use this instead of manual tmux commands
-./send-claude-message.sh <target> "message"
+~/dev/teachfloor/team-orchestrator/send-claude-message.sh <target> "message"
 
 # Examples:
 # Send to a window
-./send-claude-message.sh agentic-seek:3 "Hello Claude!"
+~/dev/teachfloor/team-orchestrator/send-claude-message.sh agentic-seek:3 "Hello Claude!"
 
 # Send to a specific pane in split-screen
-./send-claude-message.sh tmux-orc:0.1 "Message to pane 1"
+~/dev/teachfloor/team-orchestrator/send-claude-message.sh tmux-orc:0.1 "Message to pane 1"
 
 # Send complex instructions
-./send-claude-message.sh glacier-backend:0 "Please check the database schema for the campaigns table and verify all columns are present"
+~/dev/teachfloor/team-orchestrator/send-claude-message.sh glacier-backend:0 "Please check the database schema for the campaigns table and verify all columns are present"
 
 # Send status update requests
-./send-claude-message.sh ai-chat:2 "STATUS UPDATE: What's your current progress on the authentication implementation?"
+~/dev/teachfloor/team-orchestrator/send-claude-message.sh ai-chat:2 "STATUS UPDATE: What's your current progress on the authentication implementation?"
 ```
 
 #### Why Use the Script?
@@ -697,7 +744,7 @@ When a command fails:
 5. **Consistent messaging**: All agents receive messages the same way
 
 #### Script Location and Usage
-- **Location**: `./send-claude-message.sh`
+- **Location**: `~/dev/teachfloor/team-orchestrator/send-claude-message.sh`
 - **Permissions**: Already executable, ready to use
 - **Arguments**:
   - First: target (session:window or session:window.pane)
@@ -712,34 +759,34 @@ tmux send-keys -t project:0 "claude --dangerously-skip-permissions" Enter
 sleep 5
 
 # Then use the script for the briefing
-./send-claude-message.sh project:0 "You are responsible for the frontend codebase. Please start by analyzing the current project structure and identifying any immediate issues."
+~/dev/teachfloor/team-orchestrator/send-claude-message.sh project:0 "You are responsible for the frontend codebase. Please start by analyzing the current project structure and identifying any immediate issues."
 ```
 
 ##### 2. Cross-Agent Coordination
 ```bash
 # Ask frontend agent about API usage
-./send-claude-message.sh frontend:0 "Which API endpoints are you currently using from the backend?"
+~/dev/teachfloor/team-orchestrator/send-claude-message.sh frontend:0 "Which API endpoints are you currently using from the backend?"
 
 # Share info with backend agent
-./send-claude-message.sh backend:0 "Frontend is using /api/v1/campaigns and /api/v1/flows endpoints"
+~/dev/teachfloor/team-orchestrator/send-claude-message.sh backend:0 "Frontend is using /api/v1/campaigns and /api/v1/flows endpoints"
 ```
 
 ##### 3. Status Checks
 ```bash
 # Quick status request
-./send-claude-message.sh session:0 "Quick status update please"
+~/dev/teachfloor/team-orchestrator/send-claude-message.sh session:0 "Quick status update please"
 
 # Detailed status request
-./send-claude-message.sh session:0 "STATUS UPDATE: Please provide: 1) Completed tasks, 2) Current work, 3) Any blockers"
+~/dev/teachfloor/team-orchestrator/send-claude-message.sh session:0 "STATUS UPDATE: Please provide: 1) Completed tasks, 2) Current work, 3) Any blockers"
 ```
 
 ##### 4. Providing Assistance
 ```bash
 # Share error information
-./send-claude-message.sh session:0 "I see in your server window that port 3000 is already in use. Try port 3001 instead."
+~/dev/teachfloor/team-orchestrator/send-claude-message.sh session:0 "I see in your server window that port 3000 is already in use. Try port 3001 instead."
 
 # Guide stuck agents
-./send-claude-message.sh session:0 "The error you're seeing is because the virtual environment isn't activated. Run 'source venv/bin/activate' first."
+~/dev/teachfloor/team-orchestrator/send-claude-message.sh session:0 "The error you're seeing is because the virtual environment isn't activated. Run 'source venv/bin/activate' first."
 ```
 
 #### OLD METHOD (DO NOT USE)
@@ -750,14 +797,14 @@ sleep 1
 tmux send-keys -t session:window Enter
 
 # ✅ DO THIS INSTEAD:
-./send-claude-message.sh session:window "message"
+~/dev/teachfloor/team-orchestrator/send-claude-message.sh session:window "message"
 ```
 
 #### Checking for Responses
 After sending a message, check for the response:
 ```bash
 # Send message
-./send-claude-message.sh session:0 "What's your status?"
+~/dev/teachfloor/team-orchestrator/send-claude-message.sh session:0 "What's your status?"
 
 # Wait a bit for response
 sleep 5

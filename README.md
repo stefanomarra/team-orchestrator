@@ -47,40 +47,7 @@ EOF
 ./start.sh
 ```
 
-### Manual Option 1: Basic Setup (Single Project)
-
-```bash
-# 1. Create a project spec
-cat > project_spec.md << 'EOF'
-PROJECT: My Web App
-GOAL: Add user authentication system
-CONSTRAINTS:
-- Use existing database schema
-- Follow current code patterns
-- Commit every 30 minutes
-- Write tests for new features
-
-DELIVERABLES:
-1. Login/logout endpoints
-2. User session management
-3. Protected route middleware
-EOF
-
-# 2. Start tmux session
-tmux new-session -s my-project
-
-# 3. Start project manager in window 0
-claude
-
-# 4. Give PM the spec and let it create an engineer
-"You are a Project Manager. Read project_spec.md and create an engineer
-in window 1 to implement it. Schedule check-ins every 30 minutes."
-
-# 5. Schedule orchestrator check-in
-./schedule_with_note.sh 30 "Check PM progress on auth system"
-```
-
-### Manual Option 2: Full Orchestrator Setup
+### Manual Start
 
 ```bash
 # Start the orchestrator
